@@ -5,4 +5,4 @@ This was a game I originally wrote in Java; my then 9 year old son designed the 
 
 Hope you like it. It gets harder the second time round.
 
-The game makes use of osscreen and sndcore2 code I developed for previous games, see [PacMan-ish Wiki](https://github.com/MartinButlerAAA/PacMan-ishU/wiki) and [Connect4U](https://github.com/MartinButlerAAA/Connect4U)
+The game makes use of osscreen and sndcore2 code I developed for previous games, see [PacMan-ish Wiki](https://github.com/MartinButlerAAA/PacMan-ishU/wiki) and [Connect4U](https://github.com/MartinButlerAAA/Connect4U).
