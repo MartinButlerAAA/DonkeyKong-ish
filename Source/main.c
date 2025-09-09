@@ -1,5 +1,6 @@
 // DonkeyKong-ish game. Main program which calls some functions from Game to cover background and sprite movement.
 
+#include "stdio.h"				// For sprintf.
 #include <coreinit/screen.h>	// for OSScreen.
 #include <coreinit/thread.h>	// for Sleep.
 #include <coreinit/time.h>		// To get time in usec.
@@ -15,14 +16,18 @@
 
 #define COLOUR 0xF0F0F000u		// Almost white (for lines).
 
-static unsigned int level;		// Game level (1 to 4).
+static unsigned int level;		// Game level (1 to LASTLEVEL).
 static unsigned int cnt;		// Count to animation.
-static unsigned int gameState;	// Game state 0 initialisation, 1 waiting, 2 playing, 3 game over
+static unsigned int gameState;	// Game state 0 initialisation, 1 waiting, 2 playing, 3 game-over
+static unsigned int levelState;	// State within a level used for animation, 0 new-level, 1 play, 2 old-level.
+static int yoff;				// Offset used to animate old and new screens.
 static bool	dead = false;		// Mario dead.
-bool enableBarrels = false;		// Flag to enable falling barrels once game completed first time.
 
 void drawBorder()
 {
+	static unsigned int colour = 0x40404000u;	// Used to change brightness of Congratulations.
+	static int inc = 0x08080800;				// Brightness increment.
+
 	// Put a border round the screen to make a neat edge.
 	drawLine(XOFFSET, YOFFSET, XOFFSET + XDISPMAX, YOFFSET, COLOUR);
 	drawLine(XOFFSET, YOFFSET - 1, XOFFSET + XDISPMAX, YOFFSET - 1, COLOUR);
@@ -44,15 +49,32 @@ void drawBorder()
 	// If game complete show this and instruction to press button to play again.
 	else if (gameState == 3)
 	{
-		drawTextCentred("Congratulations!", 0xFEFEFE00u, 6, XDISPCTR, YDISPCTR/3, SCREEN_TV);
+		drawTextCentred("Congratulations!", colour, 6, XDISPCTR, YDISPCTR/3, SCREEN_TV);
+
+		// Show that the player has won the game, change the brightness so that this stands out. 
+		// Keep chaning brightness of Congratulations.
+		colour = colour + inc;
+		// If brightness is too high or low change increment direction.
+		if (colour >= 0xF0F0F000u) { inc = -0x08080800; }
+		if (colour <= 0x40404000u) { inc =  0x08080800; }
+
 		drawTextCentred("Press ZL and ZR to play again", 0xFEFEFE00u, 3, XDISPCTR, YDISPCTR, SCREEN_TV);
 	}
+	return;
 }
 
-// Display the game background (game table).
-void drawGame()
+// Display the game background (game table) and level.
+// The integer passed in is an offset used to shift the position up or down the screen.
+// This is used to scroll the new level on, and then the old level off once the level is complete.
+void drawGame(int yoff)
 {
-	char blk;	// Returned blk type used to select inage for display.
+	char blk;	// Returned blk type used to select image for display.
+
+	char slevel[100] = "\0";	// String for level number display.
+
+	// Turn level into characters then display.
+	sprintf(slevel, "% 2i ", level);
+	drawText(slevel, COLOUR, 5, 20, YOFFSET, SCREEN_TV);
 
 	// Keep count cycling for animation (used in other functions as well).
 	cnt++;
@@ -64,23 +86,26 @@ void drawGame()
 		for (unsigned int x = 0; x < GAMEX; x++)
 		{
 			blk = getGame(x, y);
-			if (blk == LD) { drawImage(BLKSIZE, BLKSIZE, LadderImage, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == L2) { drawImage(BLKSIZE, BLKSIZE, GirdladImage, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == GD) { drawImage(BLKSIZE, BLKSIZE, GirderImage, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == PH) { drawImage(BLKSIZE, BLKSIZE, PeachImage, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == BR) { drawImage(BLKSIZE, BLKSIZE, BarrelImage, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == DK) { drawImage(BLKSIZE * 2, BLKSIZE * 2, DKImage, x * BLKSIZE, y * BLKSIZE); }	// DK is 4 blocks 64x64
-			else if (blk == PI) { drawImage(BLKSIZE * 2, BLKSIZE, PieImage, x * BLKSIZE, y * BLKSIZE); }	// Pie is two blocks
-			else if ((blk == FL) && (cnt >= 6)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame1Image, x * BLKSIZE, y * BLKSIZE); }	// Flame is 4 blocks
-			else if ((blk == FL) && (cnt >= 4)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame2Image, x * BLKSIZE, y * BLKSIZE); }
-			else if ((blk == FL) && (cnt >= 2)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame3Image, x * BLKSIZE, y * BLKSIZE); }
-			else if ((blk == FL) && (cnt >= 0)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame2Image, x * BLKSIZE, y * BLKSIZE); }
-			else if (blk == QM) { drawImage(BLKSIZE * 2, BLKSIZE * 2, QMarkImage, x * BLKSIZE, y * BLKSIZE); }	// QMark is 4 blocks
+			// yoff is used to provide a scrolling offset to animate at start and end of screens.
+			if (blk == LD) { drawImage(BLKSIZE, BLKSIZE, LadderImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == L2) { drawImage(BLKSIZE, BLKSIZE, GirdladImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == GD) { drawImage(BLKSIZE, BLKSIZE, GirderImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == PH) { drawImage(BLKSIZE, BLKSIZE, PeachImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == BR) { drawImage(BLKSIZE, BLKSIZE, BarrelImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == DK) { drawImage(BLKSIZE * 2, BLKSIZE * 2, DKImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }	// DK is 4 blocks 64x64
+			else if (blk == PI) { drawImage(BLKSIZE * 2, BLKSIZE, PieImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }	// Pie is two blocks
+			else if ((blk == FL) && (cnt >= 6)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame1Image, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }	// Flame is 4 blocks
+			else if ((blk == FL) && (cnt >= 4)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame2Image, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if ((blk == FL) && (cnt >= 2)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame3Image, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if ((blk == FL) && (cnt >= 0)) { drawImage(BLKSIZE * 2, BLKSIZE * 2, Flame2Image, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }
+			else if (blk == QM) { drawImage(BLKSIZE * 2, BLKSIZE * 2, QMarkImage, x * BLKSIZE, ((y * BLKSIZE) + yoff)); }	// QMark is 4 blocks
 		}
 	}
+	return;
 }
 
 // Display the baddy sprites.
+// Currently all baddies are goombas, but logic is left for them to be barrels in the future.
 void drawBaddies()
 {
 	char blk;					// Returned blk type used to select image for display.
@@ -116,6 +141,7 @@ void drawBaddies()
 			}
 		}
 	}
+	return;
 }
 
 // Display the falling barrel sprites.
@@ -149,6 +175,7 @@ void drawFallingBarrels()
 			}
 		}
 	}
+	return;
 }
 
 // Display Mario including animation.
@@ -185,6 +212,38 @@ void drawMario()
 		else if (cnt >= 2) { drawImage(BLKSIZE, BLKSIZE, Mario7Image, (unsigned int)(xm * (float)BLKSIZE), (unsigned int)(ym * (float)BLKSIZE)); }
 		else               { drawImage(BLKSIZE, BLKSIZE, Mario9Image, (unsigned int)(xm * (float)BLKSIZE), (unsigned int)(ym * (float)BLKSIZE)); }
 	}
+	return;
+}
+
+// Add some animation while waiting for new game to start.
+void drawDonkeyKong()
+{
+	static unsigned int bar = BLKSIZE;	// Position of rolling barrel.
+
+	// Put DonkeyKong bottom left.
+	drawImage(BLKSIZE * 2, BLKSIZE * 2, DKImage, BLKSIZE, YDISPMAX - 100);
+
+	// Put a girder underneath DonkeyKong.
+	for (unsigned int a = 0; a < 24; a++)
+	{
+		drawImage(BLKSIZE, BLKSIZE, GirderImage, (BLKSIZE + (a * BLKSIZE)), (YDISPMAX - 100 + (2 * BLKSIZE)));
+	}
+
+	// Animate a barrel rolling along from DonkeyKong 
+	// It was easier to use hard coded values than calculate fractions of BLKSIZE.
+	// It is unlikely that BLKSIZE will change.
+	if (bar % BLKSIZE == 0)  { drawImage(BLKSIZE, BLKSIZE, Barrel1Image, (BLKSIZE + bar), (YDISPMAX - 100 + BLKSIZE)); }
+	if (bar % BLKSIZE == 8)  { drawImage(BLKSIZE, BLKSIZE, Barrel2Image, (BLKSIZE + bar), (YDISPMAX - 100 + BLKSIZE)); } // 1/4 BLKSIZE
+	if (bar % BLKSIZE == 16) { drawImage(BLKSIZE, BLKSIZE, Barrel3Image, (BLKSIZE + bar), (YDISPMAX - 100 + BLKSIZE)); } // 1/2 BLKSIZE
+	if (bar % BLKSIZE == 24) { drawImage(BLKSIZE, BLKSIZE, Barrel4Image, (BLKSIZE + bar), (YDISPMAX - 100 + BLKSIZE)); } // 3/4 BLKSIZE
+
+	// Move barrel along. Start again if it has reached the end of the girder.
+	bar = bar + 8;
+	if (bar >= ((BLKSIZE * 23) + (BLKSIZE / 2))) // Limit is set a bit lower than length of girder so barrel gets to the end.
+	{
+		bar = BLKSIZE;
+	}
+	return;
 }
 
 // Display all elements from the game on the TV screen.
@@ -196,12 +255,21 @@ void displayTV()
 	// Only display the actual game screens while the game is playing.
 	if (gameState == 2)
 	{
-		drawGame();				// Display the game array to put the game level background on the screen.
-		drawBaddies();			// Add moving baddies.
-		drawFallingBarrels();	// Add falling barrels to the screen.
-		drawMario();			// Add Mario.
+		drawGame(yoff);			// Display the game array to put the game level background on the screen. yoff allows game to be scrolled to position.
+		if (levelState == 1)	// Draw the rest if actually playing.
+		{
+			drawBaddies();			// Add moving baddies.
+			drawFallingBarrels();	// Add falling barrels to the screen.
+			drawMario();			// Add Mario.
+		}
 	}
 	drawBorder();	// Put a border round the play area of the screen.
+
+	// If waiting to start a new game do the DonkeyKong animation.
+	if ((gameState == 1) || (gameState == 3))
+	{
+		drawDonkeyKong();
+	}
 
 	// Show if Mario has died.
 	if (dead == true)
@@ -251,6 +319,8 @@ int main(int argc, char **argv)
 	setupSound();			// Call separate function from sound.h to do all of the sound setup.
 
 	gameState = 0;			// Initialisation state.
+	levelState = 0;			// Initialise level state to 0 for new screen.
+	yoff = -YDISPMAX;		// Initialise level offset so that new screen scrolls down from the top. 
 
 	// There must be a main loop on WHBProc running, for the program to correctly operate with the home button.
 	// Home pauses this loop and continues it if resume is selected. There must therefore be one main loop of processing in the main program.
@@ -260,13 +330,13 @@ int main(int argc, char **argv)
 
 		if (gameState == 0)			// Initialise
 		{
+			dead = false;			// Mario alive at game start.
 			putsoundSel(STOPBKGND);	// Ensure the background game music is stopped.
 			putsoundSel(START);		// Get the music for the start screen going.
 			gameState = 1;			// Move from initialisation to waiting to start.
 		}
 		else if (gameState == 1)	// Wait to play.
 		{
-			dead = false;
 			VPADRead(VPAD_CHAN_0, &status, 1, &error);	// Get the VPAD button last pressed.
 			if (error == VPAD_READ_SUCCESS)				// Only process buttons if no errors (e.g. gamepad lost power).
 			{
@@ -285,85 +355,103 @@ int main(int argc, char **argv)
 		}
 		else if (gameState == 2)	// Play
 		{
-			move = ' ';		// Clear so only updated for button presses.
-			jump = false;
-
-			VPADRead(VPAD_CHAN_0, &status, 1, &error);	// Get the VPAD button last pressed.
-			if (error == VPAD_READ_SUCCESS)				// Only process buttons if no errors (e.g. gamepad lost power).
+			if (levelState == 0)	// Initialise new level sceen.
 			{
-				// Capture the direction and jump controls to pass into the Game.
-				if ((status.hold & VPAD_BUTTON_UP) || (status.hold & VPAD_STICK_L_EMULATION_UP)) { move = 'U'; }
-				if ((status.hold & VPAD_BUTTON_DOWN) || (status.hold & VPAD_STICK_L_EMULATION_DOWN)) { move = 'D'; }
-				if ((status.hold & VPAD_BUTTON_LEFT) || (status.hold & VPAD_STICK_L_EMULATION_LEFT)) { move = 'L'; }
-				if ((status.hold & VPAD_BUTTON_RIGHT) || (status.hold & VPAD_STICK_L_EMULATION_RIGHT)) { move = 'R'; }
-				if (status.trigger & VPAD_BUTTON_X) { jump = true; }
-			}
-
-			moveBaddies();	// Move the baddies within the Game.
-			ret = moveMario(move, jump);	// Move Mario including taking play commands.
-
-			// Move on a level if got to the end.
-			if (ret == 'E')
-			{
-				putsoundSel(STOPBKGND);							// Stop background music.
-				OSSleepTicks(OSMillisecondsToTicks(20));		// Wait for background to stop.
-				if (level == 1)
+				// Keep scrolling the game onto the screen until in position.
+				yoff = yoff + BLKSIZE;
+				if (yoff >= 0) 
 				{
-					putsoundSel(LEVEL1);						// Play level complete.
-					OSSleepTicks(OSMillisecondsToTicks(3800));	// Wait for music to play.
-					putsoundSel(STRTBKGND);						// Start background music for next level.
-
-					level = 2;									// Initialise next level.
-					initGame(level);
-				}
-				else if (level == 2)
-				{
-					putsoundSel(LEVEL2);						// Play level complete.
-					OSSleepTicks(OSMillisecondsToTicks(2900));	// Wait for music to play.
-					putsoundSel(STRTBKGND);						// Start background music for next level.
-
-					level = 3;									// Initialise next level.
-					initGame(level);
-				}
-				else if (level == 3)
-				{
-					putsoundSel(LEVEL3);						// Play level complete.
-					OSSleepTicks(OSMillisecondsToTicks(7030));	// Wait for music to play.
-					putsoundSel(STRTBKGND);						// Start background music for next level.
-
-					level = 4;									// Initialise the next level.
-					initGame(level);
-				}
-				else if (level == 4)
-				{
-					putsoundSel(LEVEL4);						// Play level complete.
-					OSSleepTicks(OSMillisecondsToTicks(7080));	// Wait for music to play.
-					putsoundSel(START);							// Play waiting music.
-
-					gameState = 3;								// Go to end of game state.
+					levelState = 1;	// Move to play the game.
+					yoff = 0;
 				}
 			}
-
-			// This is done before checking the return value to allow one extra iteration to update the screen once Mario is dead.
-			if (dead == true)
+			else if (levelState == 1)	// Play the level.
 			{
-				putsoundSel(STOPBKGND);						// Stop background music
-				OSSleepTicks(OSMillisecondsToTicks(20));	// Wait for background to stop.
-				putsoundSel(OVER);							// Play game over.
-				OSSleepTicks(OSMillisecondsToTicks(3400));	// Wait for music to play.
+				move = ' ';		// Clear so only updated for button presses.
+				jump = false;
 
-				gameState = 0;								// Go back to re-initialise.			
+				VPADRead(VPAD_CHAN_0, &status, 1, &error);	// Get the VPAD button last pressed.
+				if (error == VPAD_READ_SUCCESS)				// Only process buttons if no errors (e.g. gamepad lost power).
+				{
+					// Capture the direction and jump controls to pass into the Game.
+					if ((status.hold & VPAD_BUTTON_UP) || (status.hold & VPAD_STICK_L_EMULATION_UP)) { move = 'U'; }
+					if ((status.hold & VPAD_BUTTON_DOWN) || (status.hold & VPAD_STICK_L_EMULATION_DOWN)) { move = 'D'; }
+					if ((status.hold & VPAD_BUTTON_LEFT) || (status.hold & VPAD_STICK_L_EMULATION_LEFT)) { move = 'L'; }
+					if ((status.hold & VPAD_BUTTON_RIGHT) || (status.hold & VPAD_STICK_L_EMULATION_RIGHT)) { move = 'R'; }
+					if (status.trigger & VPAD_BUTTON_X) { jump = true; }
+				}
+
+				moveBaddies();	// Move the baddies within the Game.
+				ret = moveMario(move, jump);	// Move Mario including taking play commands.
+
+				// Move on a level if got to the end.
+				if (ret == 'E')
+				{
+					if (level < LASTLEVEL)
+					{
+						putsoundSel(STOPBKGND);						// Stop background music.
+						OSSleepTicks(OSMillisecondsToTicks(20));	// Wait for background to stop.
+						putsoundSel(LEVEL2);						// Play level complete (use old level 2 for all complete levels).
+						OSSleepTicks(OSMillisecondsToTicks(2900));	// Wait for music to play.
+						putsoundSel(STRTBKGND);						// Start background music for next level.
+						levelState = 2;
+					}
+					else if (level == LASTLEVEL)					// Game ended.
+					{
+						putsoundSel(STOPBKGND);						// Stop background music.
+						OSSleepTicks(OSMillisecondsToTicks(20));	// Wait for background to stop.
+						putsoundSel(LEVEL4);						// Play level 4 for game complete.
+						OSSleepTicks(OSMillisecondsToTicks(7080));	// Wait for music to play.
+						putsoundSel(START);							// Play waiting music.
+
+						levelState = 2;
+					}
+				}
+
+				// This is done before checking the return value to allow one extra iteration to update the screen once Mario is dead.
+				if (dead == true)
+				{
+					putsoundSel(STOPBKGND);						// Stop background music
+					OSSleepTicks(OSMillisecondsToTicks(20));	// Wait for background to stop.
+					putsoundSel(OVER);							// Play game over.
+					OSSleepTicks(OSMillisecondsToTicks(3400));	// Wait for music to play.
+					levelState = 2;
+				}
+				// Check if Mario has died.
+				if (ret == 'D')
+				{
+					dead = true;
+				}
 			}
-			// Check if Mario has died.
-			if (ret == 'D')
+			if (levelState == 2)	// Get rid of old level screen.
 			{
-				dead = true;
+				// Keep scrolling until old level is off the screen.
+				yoff = yoff + BLKSIZE;
+				if (yoff >= YDISPMAX)
+				{
+					levelState = 0;	// Change to start of next level to scroll new screen on.
+					yoff = -YDISPMAX;
+					if (dead == true)	// Check if the player has died and go back to start.
+					{
+						gameState = 0;								// Go back to re-initialise.			
+					}
+					else // Go to the next level.
+					{
+						if (level == LASTLEVEL)
+						{
+							gameState = 3;								// Go to end of game state.
+						}
+						else // Set up new level.
+						{
+							level++;									// Setup for next level.
+							initGame(level);
+						}
+					}
+				}
 			}
 		}
 		else if (gameState == 3)	// Game complete state.
 		{
-			enableBarrels = true; // Enable barrels for the next time through.
-
 			VPADRead(VPAD_CHAN_0, &status, 1, &error);	// Get the VPAD button last pressed.
 			if (error == VPAD_READ_SUCCESS)				// Only process buttons if no errors (e.g. gamepad lost power).
 			{

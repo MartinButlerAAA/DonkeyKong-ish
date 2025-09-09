@@ -1,7 +1,7 @@
 // The Sounds functions play sounds from header files, which have been taken from 48k sample 8-bit mono .wav files.
 // The tool ProcessWav (see https://github.com/MartinButlerAAA/ProcessWav) was used to create the header files.
 // WiiU sound functions developed to add sound to games learning from LiveSynthesisU.
-#include <string.h>				// for memset
+#include <string.h>				// for memset.
 #include <sndcore2/core.h>		// for sound main functions.
 
 #include "Sounds/SoundData.h"	// For the voice.h functions and structures, along with specific sound data for this program.
@@ -91,39 +91,7 @@ void axFrameCallback()
 		AXSetVoiceState(p_vceEffect, 1);
 		putsoundSel(NOCHANGE);
 	}
-	// play Walking
-	if (soundSel == WALK)
-	{
-		AXSetVoiceState(p_vceEffect, 0);
-
-		voiceOffsets.dataType = 25;
-		voiceOffsets.loopingEnabled = 0;
-		voiceOffsets.loopOffset = 0;
-		voiceOffsets.endOffset = (11888 - 1);
-		voiceOffsets.currentOffset = 0;
-		voiceOffsets.data = (unsigned char*)WalkWave;
-		AXSetVoiceOffsets(p_vceEffect, &voiceOffsets);
-
-		AXSetVoiceState(p_vceEffect, 1);
-		putsoundSel(NOCHANGE);
-	}
-	// play  Completed Level 1
-	if (soundSel == LEVEL1)
-	{
-		AXSetVoiceState(p_vceEffect, 0);
-
-		voiceOffsets.dataType = 25;
-		voiceOffsets.loopingEnabled = 0;
-		voiceOffsets.loopOffset = 0;
-		voiceOffsets.endOffset = (181504 - 1);
-		voiceOffsets.currentOffset = 0;
-		voiceOffsets.data = (unsigned char*)Level1Wave;
-		AXSetVoiceOffsets(p_vceEffect, &voiceOffsets);
-
-		AXSetVoiceState(p_vceEffect, 1);
-		putsoundSel(NOCHANGE);
-	}
-	// play  Completed Level 2
+	// play  Completed Level 2 (used for all but last level).
 	if (soundSel == LEVEL2)
 	{
 		AXSetVoiceState(p_vceEffect, 0);
@@ -139,23 +107,7 @@ void axFrameCallback()
 		AXSetVoiceState(p_vceEffect, 1);
 		putsoundSel(NOCHANGE);
 	}
-	// play Completed Level 3
-	if (soundSel == LEVEL3)
-	{
-		AXSetVoiceState(p_vceEffect, 0);
-
-		voiceOffsets.dataType = 25;
-		voiceOffsets.loopingEnabled = 0;
-		voiceOffsets.loopOffset = 0;
-		voiceOffsets.endOffset = (337408 - 1);
-		voiceOffsets.currentOffset = 0;
-		voiceOffsets.data = (unsigned char*)Level3Wave;
-		AXSetVoiceOffsets(p_vceEffect, &voiceOffsets);
-
-		AXSetVoiceState(p_vceEffect, 1);
-		putsoundSel(NOCHANGE);
-	}
-	// play Completed Level 4
+	// play Completed Level 4 (used for last level).
 	if (soundSel == LEVEL4)
 	{
 		AXSetVoiceState(p_vceEffect, 0);

@@ -12,12 +12,9 @@ enum SOUNDSEL
 	START     = 3,		// Note that this is set up to loop, but will be stopped when intro music is selected.
 	INTRO     = 4,
 	JUMP      = 5,
-	WALK      = 6,
-	LEVEL1    = 7,
-	LEVEL2    = 8,
-	LEVEL3    = 9,
-	LEVEL4    = 10,
-	OVER      = 11,
+	LEVEL2    = 6,
+	LEVEL4    = 7,
+	OVER      = 8,
 };
 
 // Call this to set up sounds once, before attempting to call putsoundSel.

@@ -1,7 +1,9 @@
 // Header for DonkeyKong-ish accessors.
 #pragma once
 
-#include <stdbool.h>	// To use bools
+#include <stdbool.h>	// To use bools.
+
+#define LASTLEVEL 10	// Highest level in the game.
 
 // These are the game array sizes used to describe the game screen.
 #define GAMEX 26	// Game array x sixe (columns)

@@ -3,9 +3,6 @@
 
 #define MOVESTEP (1.0f/8.0f)		// Move by 1/8th of a block to support smooth animation.
 
-extern bool enableBarrels;			// Make enableBarrels global so it can be used in the game.
-									// This is a bit of a fiddle.
-
 // The x and y parameters are floating point numbers so that they can be moved by a fraction of a whole game table block for smooth sprite movement.
 // The x and y are scaled up the main program for the size of sprites used and the size of the graphics screen.
 typedef struct
@@ -25,7 +22,7 @@ typedef struct
 	bool jump;	// true indicates jumping.
 }  MarioT;
 
-// The arrays for the game screens for the 4 levels of the game.
+// The arrays for the game screens for the levels of the game (screens 1 and 2 are used twice).
 static char scr1[GAMEY][GAMEX] = {
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
@@ -55,13 +52,13 @@ static char scr2[GAMEY][GAMEX] = {
 	   { EG, SP, DK, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, DI, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, BR, BR, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, BR, BR, PH, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, Q2, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, BR, BR, PH, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, GD, GD, L2, SP, SP, SP, SP, SP, GD, GD, L2, GD, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, GD, L2, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, GD, L2, GD, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, L2, GD, GD, SP, SP, SP, LD, SP, SP, GD, GD, GD, GD, L2, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, LD, SP, SP, SP, L2, GD, GD, GD, GD, GD, GD, GD, SP, LD, SP, SP, SP, SP, SP, EG },
@@ -70,7 +67,29 @@ static char scr2[GAMEY][GAMEX] = {
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, EG } };
 
-static char scr3[GAMEY][GAMEX] = {
+static char scr5[GAMEY][GAMEX] = {
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, DK, DI, SP, SP, SP, SP, SP, SP, SP, L2, GD, GD, SP, SP, GD, GD, GD, GD, GD, GD, GD, GD, L2, SP, EG },
+	   { EG, DI, DI, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, BR, BR, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, BR, BR, PH, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, L2, GD, GD, GD, GD, GD, GD, GD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, GD, GD, GD, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, QM, Q2, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, EG } };
+
+static char scr6[GAMEY][GAMEX] = {
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, QM, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
@@ -92,7 +111,29 @@ static char scr3[GAMEY][GAMEX] = {
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, EG } };
 
-static char scr4[GAMEY + 1][GAMEX] = {	// Allow an extra edge at the bottom as a catch all in case a barrel falls through.
+static char scr7[GAMEY][GAMEX] = {
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, DK, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, DI, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, L2, SP, EG },
+	   { EG, BR, BR, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, BR, BR, PH, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, L2, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, LD, SP, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, L2, GD, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, GD, L2, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, EG } };
+
+static char scr8[GAMEY][GAMEX] = {	
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
@@ -100,7 +141,7 @@ static char scr4[GAMEY + 1][GAMEX] = {	// Allow an extra edge at the bottom as a
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, L2, GD, GD, GD, GD, L2, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, BR, DK, DI, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, BR, DI, DI, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, SP, SP, L2, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, L2, SP, SP, SP, EG },
+	   { EG, SP, SP, GD, L2, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, L2, GD, SP, SP, EG },
 	   { EG, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, LD, SP, SP, PI, DI, SP, SP, SP, PI, DI, SP, SP, SP, PI, DI, SP, SP, LD, SP, SP, SP, EG },
@@ -108,12 +149,55 @@ static char scr4[GAMEY + 1][GAMEX] = {	// Allow an extra edge at the bottom as a
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
 	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
-	   { EG, SP, GD, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, L2, SP, EG },
-	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
-	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, EG },
-	   { EG, SP, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, SP, LD, SP, EG },
-	   { EG, GD, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, GD, EG },
-	   { EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG, EG } }; // Extra set of edge to stop risk of barrels falling through screen.
+	   { EG, SP, GD, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, L2, GD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, LD, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, GD, EG } };
+
+static char scr9[GAMEY][GAMEX] = {	
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, PH, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, L2, GD, GD, GD, GD, L2, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, BR, DK, DI, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, BR, DI, DI, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, L2, GD, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, PI, DI, SP, SP, SP, PI, DI, SP, SP, SP, PI, DI, SP, SP, LD, SP, SP, SP, EG },
+	   { EG, SP, SP, GD, L2, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, EG },
+	   { EG, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, LD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, GD, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, GD, SP, GD, GD, GD, GD, GD, L2, GD, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, LD, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, SP, SP, FL, DI, SP, SP, LD, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, DI, DI, GD, GD, GD, GD, GD, EG } };
+
+static char scrA[GAMEY][GAMEX] = {
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, QM, Q2, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, Q2, Q2, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, DK, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, EG },
+	   { EG, DI, DI, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, BR, BR, SP, SP, SP, SP, SP, SP, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, BR, BR, PH, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, GD, GD, GD, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, GD, GD, GD, GD, GD, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, GD, GD, GD, GD, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, SP, EG },
+	   { EG, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, GD, EG } };
 
 // Table of jump y values to give jump the correct shape for some gravity. The table goes up for 18 steps,
 // then down for 18 steps, with a couple of 8s on the end to keep moving down if a long drop.
@@ -164,10 +248,16 @@ void initGame(unsigned int level)
 		for (unsigned int x = 0; x < GAMEX; x++)
 		{
 			// The default is the first level of the game.
-			if (level == 2)			{ store[y][x] = scr2[y][x]; }
-			else if (level == 3)	{ store[y][x] = scr3[y][x]; }
-			else if (level == 4)	{ store[y][x] = scr4[y][x]; }
-			else					{ store[y][x] = scr1[y][x]; }
+			if (level == 1 )	 { store[y][x] = scr1[y][x]; }
+			else if (level == 2) { store[y][x] = scr2[y][x]; }
+			else if (level == 3) { store[y][x] = scr1[y][x]; }
+			else if (level == 4) { store[y][x] = scr2[y][x]; }
+			else if (level == 5) { store[y][x] = scr5[y][x]; }
+			else if (level == 6) { store[y][x] = scr6[y][x]; }
+			else if (level == 7) { store[y][x] = scr7[y][x]; }
+			else if (level == 8) { store[y][x] = scr8[y][x]; }
+			else if (level == 9) { store[y][x] = scr9[y][x]; }
+			else				 { store[y][x] = scrA[y][x]; }	// LASTLEVEL
 		}
 	}
 
@@ -221,16 +311,61 @@ void initGame(unsigned int level)
 	}
 	else if (level == 3)
 	{
-		baddies[0].x =  9.0f;
+		baddies[0].x = 20.0f;
 		baddies[0].y = 18.0f;
 		baddies[0].baddy = GB;
 		baddies[0].dir = MOVESTEP;
 		baddies[1].x = 14.0f;
-		baddies[1].y =  2.0f;
+		baddies[1].y = 11.0f;
 		baddies[1].baddy = GB;
 		baddies[1].dir = MOVESTEP;
-		baddies[2].x =  8.0f;
-		baddies[2].y =  5.0f;
+	}
+	else if (level == 4)
+	{
+		baddies[0].x = 20.0f;
+		baddies[0].y = 18.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x = 14.0f;
+		baddies[1].y = 14.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 10.0f;
+		baddies[2].y = 18.0f;
+		baddies[2].baddy = GB;
+		baddies[2].dir = MOVESTEP;
+	}
+	else if (level == 5)
+	{
+		baddies[0].x = 22.0f;
+		baddies[0].y = 18.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x = 10.0f;
+		baddies[1].y = 18.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 10.0f;
+		baddies[2].y = 16.0f;
+		baddies[2].baddy = GB;
+		baddies[2].dir = MOVESTEP;
+		baddies[3].x = 20.0f;
+		baddies[3].y =  2.0f;
+		baddies[3].baddy = GB;
+		baddies[3].dir = MOVESTEP;
+	}
+	else if (level == 6)
+	{
+		baddies[0].x = 9.0f;
+		baddies[0].y = 18.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x = 14.0f;
+		baddies[1].y = 2.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 8.0f;
+		baddies[2].y = 5.0f;
 		baddies[2].baddy = GB;
 		baddies[2].dir = MOVESTEP;
 		baddies[3].x = 20.0f;
@@ -242,17 +377,36 @@ void initGame(unsigned int level)
 		baddies[4].baddy = GB;
 		baddies[4].dir = MOVESTEP;
 	}
-	else // Do level 4 as the default
+	else if (level == 7)
 	{
-		baddies[0].x =  4.0f;
-		baddies[0].y =  6.0f;
+		baddies[0].x = 20.0f;
+		baddies[0].y = 18.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x = 14.0f;
+		baddies[1].y = 11.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 15.0f;
+		baddies[2].y = 8.0f;
+		baddies[2].baddy = GB;
+		baddies[2].dir = MOVESTEP;
+		baddies[3].x = 19.0f;
+		baddies[3].y = 3.0f;
+		baddies[3].baddy = GB;
+		baddies[3].dir = MOVESTEP;
+	}
+	else if (level == 8)
+	{
+		baddies[0].x = 4.0f;
+		baddies[0].y = 6.0f;
 		baddies[0].baddy = GB;
 		baddies[0].dir = MOVESTEP;
 		baddies[1].x = 21.0f;
-		baddies[1].y =  6.0f;
+		baddies[1].y = 6.0f;
 		baddies[1].baddy = GB;
 		baddies[1].dir = MOVESTEP;
-		baddies[2].x =  2.0f;
+		baddies[2].x = 2.0f;
 		baddies[2].y = 14.0f;
 		baddies[2].baddy = GB;
 		baddies[2].dir = MOVESTEP;
@@ -269,6 +423,52 @@ void initGame(unsigned int level)
 		baddies[5].baddy = GB;
 		baddies[5].dir = MOVESTEP;
 	}
+	else if (level == 9)
+	{
+		baddies[0].x = 4.0f;
+		baddies[0].y = 6.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x = 21.0f;
+		baddies[1].y = 6.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 2.0f;
+		baddies[2].y = 14.0f;
+		baddies[2].baddy = GB;
+		baddies[2].dir = MOVESTEP;
+		baddies[3].x = 23.0f;
+		baddies[3].y = 14.0f;
+		baddies[3].baddy = GB;
+		baddies[3].dir = MOVESTEP;
+		baddies[4].x = 20.0f;
+		baddies[4].y = 10.0f;
+		baddies[4].baddy = GB;
+		baddies[4].dir = MOVESTEP;
+	}
+	else // Do LASTLEVEL as the default
+	{
+		baddies[0].x = 19.0f;
+		baddies[0].y = 12.0f;
+		baddies[0].baddy = GB;
+		baddies[0].dir = MOVESTEP;
+		baddies[1].x =  5.0f;
+		baddies[1].y = 14.0f;
+		baddies[1].baddy = GB;
+		baddies[1].dir = MOVESTEP;
+		baddies[2].x = 14.0f;
+		baddies[2].y =  2.0f;
+		baddies[2].baddy = GB;
+		baddies[2].dir = MOVESTEP;
+		baddies[3].x =  7.0f;
+		baddies[3].y =  8.0f;
+		baddies[3].baddy = GB;
+		baddies[3].dir = MOVESTEP;
+		baddies[4].x = 20.0f;
+		baddies[4].y = 18.0f;
+		baddies[4].baddy = GB;
+		baddies[4].dir = MOVESTEP;
+	}
 
 	// Put Mario in the starting position.
 	Mario.face = ' ';
@@ -280,7 +480,7 @@ void initGame(unsigned int level)
 // Move falling barrels
 void moveFallingBarrels(void)
 {
-	static unsigned int cnt = 50;
+	static unsigned int cnt = 1;	// Used to sequence a new barrel.
 
 	cnt++;	// Done inside the loop so all barrels aren't done at once.
 
@@ -289,35 +489,40 @@ void moveFallingBarrels(void)
 	{
 		// If it isn't a barrel, set it to a barrel.
 		// cnt is used to leave a reasonable gap between barrels.
-		// gameLevel is used to make the barrels come more quickly
-		if ((falling[a].baddy != BL) && ((cnt % (120 - (gameLevel * 5))) == 0))
+		// Don't do barrels for the first 2 levels.
+		if ((falling[a].baddy != BL) && ((cnt % 120) == 0) && (gameLevel >= 3))
 		{
-			cnt = 1;	// Set back to zero ready for the next barrel.
-			// Set the barrel to start at Donkey Kong (which is a bit different for each level.
+			cnt = 1;	// Set back to start ready for the next barrel.
+			// Set the barrel to start at Donkey Kong (which can be different for each level).
+			// First two levels don't have barrels.
 			falling[a].baddy = BL;
-			if      (gameLevel == 1) { falling[a].x =  2.0f; falling[a].y = 4.0f; }
-			else if (gameLevel == 2) { falling[a].x =  3.0f; falling[a].y = 4.0f; }
-			else if (gameLevel == 3) { falling[a].x = 12.0f; falling[a].y = 6.0f; }
-			else if (gameLevel == 4) { falling[a].x = 12.0f; falling[a].y = 6.0f; }
+			if      (gameLevel == 3) { falling[a].x =  2.0f; falling[a].y = 4.0f; }
+			else if (gameLevel == 4) { falling[a].x =  3.0f; falling[a].y = 4.0f; }
+			else if (gameLevel == 5) { falling[a].x =  2.0f; falling[a].y = 4.0f; }
+			else if (gameLevel == 6) { falling[a].x = 12.0f; falling[a].y = 6.0f; }
+			else if (gameLevel == 7) { falling[a].x =  2.0f; falling[a].y = 4.0f; }
+			else if (gameLevel == 8) { falling[a].x = 12.0f; falling[a].y = 6.0f; }
+			else if (gameLevel == 9) { falling[a].x = 12.0f; falling[a].y = 6.0f; }
+			else                     { falling[a].x =  2.0f; falling[a].y = 4.0f; } // LASTLEVEL
 
 			// Set the barrel to roll towards Mario when it lands.
 			if (Mario.x < falling[a].x) { falling[a].dir = (MOVESTEP * -2.0f); }
 			else { falling[a].dir = (MOVESTEP * 2.0f); }
 		}
-		else if (falling[a].baddy == BL)
+		else if (falling[a].baddy == BL)	// If barrel is already set up, keep it moving.
 		{
 			// If the barrel has not landed fall straight down.
 			if ((store[toInt(falling[a].y + 0.5f)][toInt(falling[a].x)] != GD) && (store[toInt(falling[a].y + 0.5)][toInt(falling[a].x)] != L2))
 			{
-				// Fall faster than sideways movement.
+				// Fall at twice speed of goombas.
 				falling[a].y = falling[a].y + (MOVESTEP * 2.0f);
 
 				// Set the barrel to roll towards Mario when it lands.
 				if (Mario.x < falling[a].x) { falling[a].dir = (MOVESTEP * -2.0f); }
 				else { falling[a].dir = (MOVESTEP * 2.0f); }
 
-				// An extra trap in case the barrel has fallen through to the bottom of the last screen.
-				if (store[toInt(falling[a].y)][toInt(falling[a].x)] == EG)
+				// If barrel dropped to the bottom of the screen remove it.
+				if (falling[a].y >= GAMEY)
 				{
 					// Clear everything out, so that it can start again.
 					falling[a].x = 0.0f;
@@ -347,13 +552,6 @@ void moveFallingBarrels(void)
 // Keep the baddies moving back and forth.
 void moveBaddies(void)
 {
-	// Only once falling barrels are enabled do the processing.
-	if (enableBarrels == true) 
-	{
-		// Call the function to move the falling barrels as well.
-		moveFallingBarrels();
-	}
-
 	// Move all baddies
 	for (unsigned int a = 0; a < MAXBADDY; a++)
 	{
@@ -396,6 +594,11 @@ void moveBaddies(void)
 			}
 		}
 	}
+
+	// Call the function to move the falling barrels as well. This avoids main program calling two functions.
+	moveFallingBarrels();
+
+	return;
 }
 
 // Do logic for Mario Jumping.
@@ -418,16 +621,19 @@ char jumpMario()
 		Mario.x = Mario.x - MOVESTEP;
 	}
 	// Otherwise the jump will be straight up.
+
 	Mario.y = Mario.y + jmpTable[jmpCnt];			// Table to shape Mario jump
 	// If jumping straight up, face up.
 	if (Mario.face == ' ') { Mario.face = 'U'; }
 
+	// Check if Mario has got to the end of the screen.
 	if ((store[toInt(Mario.y)][toInt(Mario.x)] == QM) || (store[toInt(Mario.y)][toInt(Mario.x)] == Q2))
 	{
 		MarioState = 1;		// Go back to falling state
 		Mario.jump = false;	// and stop jump.
 		return 'E';			// return that this is the end of the level.
 	}
+
 	// If the jump has hit the edge, stop jumping and start falling.
 	else if (store[toInt(Mario.y)][toInt(Mario.x)] == EG)
 	{
@@ -649,7 +855,7 @@ bool checkMario()
 			// Report if Mario has touched a barrel.
 			if ((xdiff <= 0.5f) && (ydiff <= 0.5f))
 			{
-				return true;
+				return true; 
 			}
 		}
 	}
@@ -777,4 +983,3 @@ void getMario(float *xm, float *ym, char *face, bool *jump)
 	*face = Mario.face;
 	*jump = Mario.jump;
 }
-
