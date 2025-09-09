@@ -11,11 +11,8 @@
 #include "Sounds/Start.wav.h"
 #include "Sounds/Intro.wav.h"
 #include "Sounds/Background.wav.h"
-#include "Sounds/Walk.wav.h"
 #include "Sounds/Jump.wav.h"
-#include "Sounds/Level1.wav.h"
 #include "Sounds/Level2.wav.h"
-#include "Sounds/Level3.wav.h"
 #include "Sounds/Level4.wav.h"
 #include "Sounds/GameOver.wav.h"
 
